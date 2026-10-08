@@ -1,0 +1,238 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'contact.akp2i@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidUserPublic(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'role', 'isVerified', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'fullName', 'role', 'isVerified', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_-]+$') &&
+        data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+        data.role is string && data.role.size() <= 32 &&
+        data.role in ['Peserta', 'Admin Pelatihan', 'Verifikator', 'Instruktur', 'Super Admin'] &&
+        data.isVerified is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['uid', 'email', 'phone', 'nik', 'npwp', 'gender', 'birthPlace', 'birthDate', 'address', 'province', 'city', 'educationLevel', 'institution', 'major', 'occupation', 'position', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'phone', 'nik', 'npwp', 'gender', 'birthPlace', 'birthDate', 'address', 'province', 'city', 'educationLevel', 'institution', 'major', 'occupation', 'position', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_-]+$') &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.phone is string && data.phone.size() <= 30 &&
+        data.nik is string && data.nik.size() <= 32 &&
+        data.npwp is string && data.npwp.size() <= 32 &&
+        data.gender is string && data.gender.size() <= 20 && data.gender in ['Laki-laki', 'Perempuan'] &&
+        data.birthPlace is string && data.birthPlace.size() <= 100 &&
+        data.birthDate is string && data.birthDate.size() <= 50 &&
+        data.address is string && data.address.size() <= 300 &&
+        data.province is string && data.province.size() <= 100 &&
+        data.city is string && data.city.size() <= 100 &&
+        data.educationLevel is string && data.educationLevel.size() <= 100 &&
+        data.institution is string && data.institution.size() <= 150 &&
+        data.major is string && data.major.size() <= 100 &&
+        data.occupation is string && data.occupation.size() <= 120 &&
+        data.position is string && data.position.size() <= 120 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'createdAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_-]+$') &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.role is string && data.role.size() <= 32 &&
+        data.role in ['Super Admin', 'Admin Pelatihan', 'Verifikator', 'Instruktur'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll(['id', 'regNumber', 'programId', 'programTitle', 'participantId', 'participantName', 'participantEmail', 'participantPhone', 'registeredAt', 'trainingDateText', 'amount', 'status', 'paymentStatus', 'paymentMethod', 'stepIndex', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'regNumber', 'programId', 'programTitle', 'subTierName', 'participantId', 'participantName', 'participantEmail', 'participantPhone', 'registeredAt', 'trainingDateText', 'amount', 'status', 'paymentStatus', 'paymentMethod', 'paymentProofFileName', 'paymentProofSize', 'paymentProofUploadedAt', 'paymentRejectionReason', 'stepIndex', 'createdAt', 'updatedAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_-]+$') &&
+        data.regNumber is string && data.regNumber.size() >= 3 && data.regNumber.size() <= 64 &&
+        data.programId is string && data.programId.size() >= 1 && data.programId.size() <= 128 && data.programId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.programTitle is string && data.programTitle.size() >= 2 && data.programTitle.size() <= 200 &&
+        (!('subTierName' in data) || (data.subTierName is string && data.subTierName.size() <= 120)) &&
+        data.participantId is string && data.participantId.size() >= 1 && data.participantId.size() <= 128 && data.participantId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.participantName is string && data.participantName.size() >= 2 && data.participantName.size() <= 120 &&
+        data.participantEmail is string && data.participantEmail.size() >= 3 && data.participantEmail.size() <= 150 &&
+        data.participantPhone is string && data.participantPhone.size() <= 30 &&
+        data.registeredAt is string && data.registeredAt.size() <= 64 &&
+        data.trainingDateText is string && data.trainingDateText.size() <= 120 &&
+        data.amount is number && data.amount >= 0 &&
+        data.status is string && data.status.size() <= 40 &&
+        data.status in ['Menunggu Pembayaran', 'Menunggu Verifikasi', 'Terverifikasi', 'Terdaftar', 'Pelatihan Berlangsung', 'Selesai', 'Dibatalkan'] &&
+        data.paymentStatus is string && data.paymentStatus.size() <= 40 &&
+        data.paymentStatus in ['Belum Dibayar', 'Menunggu Verifikasi', 'Pembayaran Terverifikasi', 'Pembayaran Ditolak'] &&
+        data.paymentMethod is string && data.paymentMethod.size() <= 60 &&
+        (!('paymentProofFileName' in data) || (data.paymentProofFileName is string && data.paymentProofFileName.size() <= 200)) &&
+        (!('paymentProofSize' in data) || (data.paymentProofSize is string && data.paymentProofSize.size() <= 40)) &&
+        (!('paymentProofUploadedAt' in data) || (data.paymentProofUploadedAt is string && data.paymentProofUploadedAt.size() <= 64)) &&
+        (!('paymentRejectionReason' in data) || (data.paymentRejectionReason is string && data.paymentRejectionReason.size() <= 300)) &&
+        data.stepIndex is number && data.stepIndex >= 1 && data.stepIndex <= 8 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCertificate(data) {
+      return data.keys().hasAll(['id', 'certificateNumber', 'participantId', 'participantName', 'programId', 'programTitle', 'issueDate', 'expiryDate', 'predicate', 'status', 'qrVerificationCode', 'signatoryName', 'signatoryTitle', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'certificateNumber', 'participantId', 'participantName', 'programId', 'programTitle', 'issueDate', 'expiryDate', 'predicate', 'status', 'qrVerificationCode', 'signatoryName', 'signatoryTitle', 'createdAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_-]+$') &&
+        data.certificateNumber is string && data.certificateNumber.size() >= 3 && data.certificateNumber.size() <= 64 &&
+        data.participantId is string && data.participantId.size() >= 1 && data.participantId.size() <= 128 && data.participantId.matches('^[a-zA-Z0-9_-]+$') &&
+        data.programId is string && data.programId.size() >= 1 && data.programId.size() <= 128 &&
+        data.participantName is string && data.participantName.size() >= 2 && data.participantName.size() <= 120 &&
+        data.programTitle is string && data.programTitle.size() >= 2 && data.programTitle.size() <= 200 &&
+        data.issueDate is string && data.issueDate.size() <= 64 &&
+        data.expiryDate is string && data.expiryDate.size() <= 64 &&
+        data.predicate is string && data.predicate.size() <= 100 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Valid & Aktif', 'Dicabut'] &&
+        data.qrVerificationCode is string && data.qrVerificationCode.size() <= 200 &&
+        data.signatoryName is string && data.signatoryName.size() <= 120 &&
+        data.signatoryTitle is string && data.signatoryTitle.size() <= 120 &&
+        data.createdAt is timestamp;
+    }
+
+    // 4. Collection Match Blocks
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin() || (isVerifiedUser() && resource.data.uid == request.auth.uid);
+      allow create: if isValidId(userId) && isValidUserPublic(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          (isOwner(userId) && incoming().role == 'Peserta' && incoming().isVerified == false) ||
+          isAdmin()
+        );
+      allow update: if isValidId(userId) && isValidUserPublic(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'updatedAt'])) ||
+          isAdmin()
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+
+      // Master Gate + PII Split Subcollection
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) &&
+          (isOwner(userId) || isAdmin()) &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow create: if isValidId(userId) && isValidId(docId) && isValidUserPrivateInfo(incoming()) &&
+          incoming().uid == userId &&
+          incoming().updatedAt == request.time &&
+          (isOwner(userId) || isAdmin()) &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isValidId(userId) && isValidId(docId) && isValidUserPrivateInfo(incoming()) &&
+          incoming().uid == existing().uid &&
+          incoming().updatedAt == request.time &&
+          (
+            (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['phone', 'nik', 'npwp', 'gender', 'birthPlace', 'birthDate', 'address', 'province', 'city', 'educationLevel', 'institution', 'major', 'occupation', 'position', 'updatedAt'])) ||
+            isAdmin()
+          ) &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if isValidId(userId) && isValidId(docId) && isAdmin();
+      }
+    }
+
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(adminId) && isValidAdminRecord(incoming()) &&
+        incoming().uid == adminId &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if isValidId(adminId) && isValidAdminRecord(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        isAdmin();
+      allow delete: if isValidId(adminId) && isAdmin();
+    }
+
+    match /registrations/{registrationId} {
+      allow get: if isValidId(registrationId) &&
+        (isAdmin() || (isVerifiedUser() && existing().participantId == request.auth.uid));
+      allow list: if isAdmin() || (isVerifiedUser() && resource.data.participantId == request.auth.uid);
+      allow create: if isValidId(registrationId) && isValidRegistration(incoming()) &&
+        incoming().id == registrationId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          (isVerifiedUser() &&
+            incoming().participantId == request.auth.uid &&
+            incoming().status in ['Menunggu Pembayaran', 'Menunggu Verifikasi'] &&
+            incoming().paymentStatus in ['Belum Dibayar', 'Menunggu Verifikasi'] &&
+            exists(/databases/$(database)/documents/users/$(incoming().participantId))) ||
+          isAdmin()
+        );
+      allow update: if isValidId(registrationId) && isValidRegistration(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().participantId == existing().participantId &&
+        incoming().programId == existing().programId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            isVerifiedUser() &&
+            existing().participantId == request.auth.uid &&
+            !(existing().status in ['Selesai', 'Dibatalkan']) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['paymentProofFileName', 'paymentProofSize', 'paymentProofUploadedAt', 'paymentStatus', 'status', 'stepIndex', 'updatedAt']) &&
+            incoming().paymentStatus == 'Menunggu Verifikasi' &&
+            incoming().status == 'Menunggu Verifikasi' &&
+            incoming().stepIndex == 3
+          )
+        );
+      allow delete: if isValidId(registrationId) && isAdmin();
+    }
+
+    match /certificates/{certificateId} {
+      allow get: if isValidId(certificateId);
+      allow list: if isAdmin() || (isVerifiedUser() && resource.data.participantId == request.auth.uid);
+      allow create: if isValidId(certificateId) && isValidCertificate(incoming()) &&
+        incoming().id == certificateId &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if isValidId(certificateId) && isValidCertificate(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().participantId == existing().participantId &&
+        incoming().createdAt == existing().createdAt &&
+        isAdmin();
+      allow delete: if isValidId(certificateId) && isAdmin();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "AKP2I Learning Center - Portal Pelatihan & Sertifikasi Perpajakan",
+  "description": "Platform pelatihan profesional, bimbingan teknis, brevet pajak, dan uji kompetensi perpajakan resmi milik Asosiasi Konsultan Pajak Publik Indonesia (AKP2I).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

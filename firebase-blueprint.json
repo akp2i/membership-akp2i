@@ -1,0 +1,357 @@
+{
+  "entities": {
+    "UserPublic": {
+      "title": "UserPublic",
+      "description": "Public profile record of an authenticated AKP2I platform user without sensitive PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching the document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full display name of the user.",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Assigned role in the AKP2I portal.",
+          "enum": ["Peserta", "Admin Pelatihan", "Verifikator", "Instruktur", "Super Admin"],
+          "maxLength": 32
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Whether the user identity is verified."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": ["uid", "fullName", "role", "isVerified", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII and personal identity records for an AKP2I user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "nik": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "npwp": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Laki-laki", "Perempuan"],
+          "maxLength": 20
+        },
+        "birthPlace": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "birthDate": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "province": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "educationLevel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "institution": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "major": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "occupation": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "position": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "phone", "nik", "npwp", "gender", "birthPlace", "birthDate", "address", "province", "city", "educationLevel", "institution", "major", "occupation", "position", "updatedAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted administrator registry entry.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Super Admin", "Admin Pelatihan", "Verifikator", "Instruktur"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Registration": {
+      "title": "Registration",
+      "description": "Training registration and payment tracking record.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "regNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "programId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "programTitle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200
+        },
+        "subTierName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "participantId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "participantEmail": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 150
+        },
+        "participantPhone": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "registeredAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "trainingDateText": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "amount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Menunggu Pembayaran", "Menunggu Verifikasi", "Terverifikasi", "Terdaftar", "Pelatihan Berlangsung", "Selesai", "Dibatalkan"],
+          "maxLength": 40
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["Belum Dibayar", "Menunggu Verifikasi", "Pembayaran Terverifikasi", "Pembayaran Ditolak"],
+          "maxLength": 40
+        },
+        "paymentMethod": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "paymentProofFileName": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "paymentProofSize": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "paymentProofUploadedAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "paymentRejectionReason": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "stepIndex": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "regNumber", "programId", "programTitle", "participantId", "participantName", "participantEmail", "participantPhone", "registeredAt", "trainingDateText", "amount", "status", "paymentStatus", "paymentMethod", "stepIndex", "createdAt", "updatedAt"]
+    },
+    "Certificate": {
+      "title": "Certificate",
+      "description": "Official AKP2I training and competency certificate.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "certificateNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "participantId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "participantName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "programId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "programTitle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200
+        },
+        "issueDate": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "expiryDate": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "predicate": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Valid & Aktif", "Dicabut"],
+          "maxLength": 32
+        },
+        "qrVerificationCode": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "signatoryName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "signatoryTitle": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "certificateNumber", "participantId", "participantName", "programId", "programTitle", "issueDate", "expiryDate", "predicate", "status", "qrVerificationCode", "signatoryName", "signatoryTitle", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublic" },
+      "description": "Public non-PII user profiles."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Strictly isolated PII subcollection readable only by owner or admin."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted administrator lookup collection."
+    },
+    "/registrations/{registrationId}": {
+      "schema": { "$ref": "#/entities/Registration" },
+      "description": "Training registrations owned by participants and verifiable by admins."
+    },
+    "/certificates/{certificateId}": {
+      "schema": { "$ref": "#/entities/Certificate" },
+      "description": "Official AKP2I certificates issued by administrators."
+    }
+  }
+}
